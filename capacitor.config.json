@@ -1,0 +1,12 @@
+{
+  "appId": "com.pilafree.app",
+  "appName": "PilaFree",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "https"
+  }
+}
+
