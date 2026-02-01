@@ -2,6 +2,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./guards/ProtectedRoute";
 import AppShell from "./components/AppShell";
+import TitleManager from "./components/TitleManager";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -39,197 +40,201 @@ function RoleDashboard() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <>
+      <TitleManager />
 
-      <Route path="/login" element={<Login />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      <Route path="/dashboard" element={<RoleDashboard />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "pharmacist", "kiosk", "display", "customer"]}>
-            <AppShell>
-              <Profile />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route path="/dashboard" element={<RoleDashboard />} />
 
-      {/* Admin */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AppShell>
-              <AdminDashboard />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist", "kiosk", "display", "customer"]}>
+              <AppShell>
+                <Profile />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/reservations-hub"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
-            <AppShell>
-              <ReservationsHub />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        {/* Admin */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AppShell>
+                <AdminDashboard />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/admin/branches"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AppShell>
-              <AdminBranches />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/reservations-hub"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <ReservationsHub />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/admin/medicines"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AppShell>
-              <AdminMedicines />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/admin/branches"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AppShell>
+                <AdminBranches />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/admin/users"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AppShell>
-              <AdminUsers />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/admin/medicines"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AppShell>
+                <AdminMedicines />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Pharmacist */}
-      <Route
-        path="/pharmacist"
-        element={
-          <ProtectedRoute allowedRoles={["pharmacist"]}>
-            <AppShell>
-              <PharmacistDashboard />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AppShell>
+                <AdminUsers />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Inventory (admin + pharmacist) */}
-      <Route
-        path="/inventory"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
-            <AppShell>
-              <Inventory />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        {/* Pharmacist */}
+        <Route
+          path="/pharmacist"
+          element={
+            <ProtectedRoute allowedRoles={["pharmacist"]}>
+              <AppShell>
+                <PharmacistDashboard />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Queue */}
-      <Route
-        path="/kiosk"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "kiosk"]}>
-            <AppShell topbarProps={{ showNav: false }}>
-              <QueueKiosk />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        {/* Inventory (admin + pharmacist) */}
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <Inventory />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/queue-dashboard"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
-            <AppShell>
-              <QueueDashboard />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        {/* Queue */}
+        <Route
+          path="/kiosk"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "kiosk"]}>
+              <AppShell topbarProps={{ showNav: false }}>
+                <QueueKiosk />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/queue-display"
-        element={
-          <ProtectedRoute allowedRoles={["display", "kiosk", "admin", "pharmacist"]}>
-            <AppShell topbarProps={{ showNav: false }}>
-              <QueueDisplay />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/queue-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <QueueDashboard />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Customer */}
-      <Route
-        path="/customer"
-        element={
-          <ProtectedRoute allowedRoles={["customer"]}>
-            <AppShell>
-              <CustomerDashboard />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/queue-display"
+          element={
+            <ProtectedRoute allowedRoles={["display", "kiosk", "admin", "pharmacist"]}>
+              <AppShell topbarProps={{ showNav: false }}>
+                <QueueDisplay />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/reserve"
-        element={
-          <ProtectedRoute allowedRoles={["customer", "kiosk", "admin", "pharmacist"]}>
-            <AppShell>
-              <ReserveMeds />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        {/* Customer */}
+        <Route
+          path="/customer"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <AppShell>
+                <CustomerDashboard />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/verify-reservation"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
-            <AppShell>
-              <VerifyReservation />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/reserve"
+          element={
+            <ProtectedRoute allowedRoles={["customer", "kiosk", "admin", "pharmacist"]}>
+              <AppShell>
+                <ReserveMeds />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/stock"
-        element={
-          <ProtectedRoute allowedRoles={["customer", "kiosk", "admin", "pharmacist"]}>
-            <AppShell>
-              <CustomerInventory />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/verify-reservation"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <VerifyReservation />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Builder */}
-      <Route
-        path="/builder/*"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
-            <AppShell>
-              <BuilderPage />
-            </AppShell>
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/stock"
+          element={
+            <ProtectedRoute allowedRoles={["customer", "kiosk", "admin", "pharmacist"]}>
+              <AppShell>
+                <CustomerInventory />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
 
-      <Route path="*" element={<div style={{ padding: 24 }}>Not Found</div>} />
-    </Routes>
+        {/* Builder */}
+        <Route
+          path="/builder/*"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <BuilderPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<div style={{ padding: 24 }}>Not Found</div>} />
+      </Routes>
+    </>
   );
 }
