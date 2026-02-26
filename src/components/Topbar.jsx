@@ -4,6 +4,7 @@ import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../services/auth";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
+import NotificationCenter from "./NotificationCenter";
 
 function initialsFrom(nameOrEmail = "") {
   const s = String(nameOrEmail).trim();
@@ -22,16 +23,14 @@ function roleLabel(role) {
 }
 
 /**
- * ✅ Important: In React Router v6, NavLink matches by prefix by default.
- * That means "/admin" would be active for "/admin/branches".
- *
- * To prevent "Dashboard" staying highlighted, set end:true on those root links.
+ * React Router v6 NavLink matches by prefix by default.
+ * Use end:true for root dashboards so "Dashboard" doesn't stay active.
  */
 function linksForRole(role) {
   switch (role) {
     case "admin":
       return [
-        { to: "/admin", label: "Dashboard", end: true }, // ✅ exact match
+        { to: "/admin", label: "Dashboard", end: true },
         { to: "/admin/branches", label: "Branches" },
         { to: "/admin/medicines", label: "Medicines" },
         { to: "/inventory", label: "Inventory" },
@@ -41,7 +40,7 @@ function linksForRole(role) {
       ];
     case "pharmacist":
       return [
-        { to: "/pharmacist", label: "Dashboard", end: true }, // ✅ exact match
+        { to: "/pharmacist", label: "Dashboard", end: true },
         { to: "/queue-dashboard", label: "Queue" },
         { to: "/verify-reservation", label: "Verify" },
         { to: "/inventory", label: "Inventory" },
@@ -50,19 +49,19 @@ function linksForRole(role) {
       ];
     case "customer":
       return [
-        { to: "/customer", label: "Home", end: true }, // ✅ exact match
+        { to: "/customer", label: "Home", end: true },
         { to: "/reserve", label: "Reserve" },
         { to: "/stock", label: "Stock Lookup" },
       ];
     case "kiosk":
       return [
-        { to: "/kiosk", label: "Kiosk", end: true }, // ✅ exact match
+        { to: "/kiosk", label: "Kiosk", end: true },
         { to: "/queue-display", label: "Display" },
       ];
     case "display":
       return [{ to: "/queue-display", label: "Queue Display", end: true }];
     default:
-      return [{ to: "/dashboard", label: "Dashboard", end: true }]; // ✅ exact match
+      return [{ to: "/dashboard", label: "Dashboard", end: true }];
   }
 }
 
@@ -71,6 +70,7 @@ export default function Topbar({
   links,
   showNav = true,
   showTheme = true,
+  showNotifications = true,
   showUserMenu = true,
 }) {
   const { user, profile, loading } = useAuth();
@@ -128,6 +128,21 @@ export default function Topbar({
     navigate("/login");
   }
 
+  // =========================================================
+  // ✅ Notification visibility rules:
+  // - Hidden on /login
+  // - Only visible for role: admin or pharmacist
+  // - Hidden for: display, kiosk, customer (covered by allowlist)
+  // =========================================================
+  const isLoginPage =
+    location.pathname === "/login" || location.pathname.startsWith("/login/");
+
+  const roleCanSeeNotifications =
+    !!profile && (role === "admin" || role === "pharmacist");
+
+  const shouldShowNotifications =
+    showNotifications && !!user && !loading && !isLoginPage && roleCanSeeNotifications;
+
   return (
     <header className="topbar" role="banner">
       <div className="topbarInner">
@@ -145,7 +160,7 @@ export default function Topbar({
                 <NavLink
                   key={l.to}
                   to={l.to}
-                  end={Boolean(l.end)} // ✅ FIX: exact match where needed
+                  end={Boolean(l.end)}
                   className={({ isActive }) =>
                     "navLink" + (isActive ? " active" : "")
                   }
@@ -186,6 +201,16 @@ export default function Topbar({
                 {mobileOpen ? "Close menu" : "Open menu"}
               </span>
             </button>
+          )}
+
+          {/* ✅ Notifications (only when allowed) */}
+          {shouldShowNotifications && (
+            <NotificationCenter
+              onOpen={() => {
+                setMenuOpen(false);
+                setMobileOpen(false);
+              }}
+            />
           )}
 
           {/* Theme button */}
@@ -256,14 +281,7 @@ export default function Topbar({
                     Profile
                   </button>
 
-                  <button
-                    className="menuItem"
-                    type="button"
-                    onClick={toggleTheme}
-                    role="menuitem"
-                  >
-                    Theme: {theme === "dark" ? "Dark" : "Light"}
-                  </button>
+                
 
                   <div className="menuDivider" />
 
@@ -306,7 +324,7 @@ export default function Topbar({
               <NavLink
                 key={l.to}
                 to={l.to}
-                end={Boolean(l.end)} // ✅ FIX: same for mobile
+                end={Boolean(l.end)}
                 className={({ isActive }) =>
                   "mobileLink" + (isActive ? " active" : "")
                 }

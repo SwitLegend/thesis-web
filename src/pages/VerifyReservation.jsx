@@ -396,6 +396,22 @@ export default function VerifyReservation() {
                 {busy ? "Claiming..." : "Claim Reservation"}
               </motion.button>
 
+              {/* ✅ POS handoff */}
+              <motion.button
+                className="btnSoft"
+                onClick={() => {
+                  if (!reservation?.id) return;
+                  const b = reservation.branchId || branchId;
+                  navigate(`/pos?reservationId=${reservation.id}&branchId=${b}`);
+                }}
+                disabled={busy || !reservation?.id}
+                whileHover={busy || !reservation?.id || reduce ? undefined : { scale: 1.02 }}
+                whileTap={busy || !reservation?.id || reduce ? undefined : { scale: 0.97 }}
+                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 32 }}
+              >
+                Open POS (Checkout)
+              </motion.button>
+
               <AnimatePresence>
                 {msg ? (
                   <motion.div

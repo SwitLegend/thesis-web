@@ -103,6 +103,15 @@ export default function AdminDashboard() {
           <DashLink to="/inventory">
             <ActionCard icon="📦" title="Inventory" desc="View current stock levels per branch." motionProps={m} />
           </DashLink>
+
+          <DashLink to="/pos">
+            <ActionCard
+              icon="💳"
+              title="Point of Sale"
+              desc="Pay via Cash/Card/GCash + Auto-Inventory"
+              motionProps={m}
+            />
+          </DashLink>
 <DashLink to="/reservations-hub">
             <ActionCard
               icon="🗂️"
@@ -119,6 +128,14 @@ export default function AdminDashboard() {
               icon="🔎"
               title="Stock Lookup"
               desc="Check medicine availability across branches."
+              motionProps={m}
+            />
+          </DashLink>
+           <DashLink to="/pos">
+            <ActionCard
+              icon="💳"
+              title="Point of Sale"
+              desc="Pay via Cash/Card/GCash + Auto-Inventory"
               motionProps={m}
             />
           </DashLink>

@@ -640,6 +640,23 @@ export default function ReservationsHub() {
                 <div className="btnRow">
                   <motion.button
                     className="btn btnPrimary"
+                    onClick={() =>
+                      navigate(`/pos?reservationId=${selected.id}&branchId=${selected.branchId || ""}`)
+                    }
+                    disabled={
+                      busy ||
+                      selected._isExpired ||
+                      ["archived", "cancelled"].includes(normStatus(selected.status))
+                    }
+                    whileHover={busy || selected._isExpired || reduce ? undefined : { scale: 1.02 }}
+                    whileTap={busy || selected._isExpired || reduce ? undefined : { scale: 0.98 }}
+                    transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 32 }}
+                  >
+                    Open POS Checkout
+                  </motion.button>
+
+                  <motion.button
+                    className="btn btnGhost"
                     onClick={() => doComplete(selected)}
                     disabled={busy || ["completed", "archived"].includes(normStatus(selected.status))}
                     whileHover={busy || reduce ? undefined : { scale: 1.02 }}

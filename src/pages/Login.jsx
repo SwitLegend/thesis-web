@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { login, registerUser } from "../services/auth";
 import { useAuth } from "../hooks/useAuth";
 import { Navigate } from "react-router-dom";
@@ -60,16 +60,50 @@ export default function Login() {
   const reduce = useReducedMotion();
   const m = useMemo(() => makeMotion(!!reduce), [reduce]);
 
-  // auth mode
-  const [mode, setMode] = useState("login"); // "login" | "signup"
+  const [aboutOpen, setAboutOpen] = useState(false);
 
-  // login + signup
+  const researchers = useMemo(
+    () => [
+      {
+        name: "MARY VIRGIN EVE D. CREDO",
+        photo: "/researchers/credo.jpg",
+        bio: "Focus: Authentication + role-based access. Integrated Firebase Auth, guarded routes, and user profile permissions.",
+      },
+      {
+        name: "JOHN CHRISTIAN C. HUBAHIB",
+        photo: "/researchers/hubahib.jpg",
+        bio: "Focus: Firestore architecture + real-time features. Implemented data flows, subscriptions, and performance-friendly queries.",
+      },
+      {
+        name: "SWITBERTO III L. SILVOSA",
+        photo: "/researchers/silvosa.jpg",
+        bio: "Focus: UI/UX + front-end implementation. Built responsive layouts and animations for a clean, modern experience.",
+      },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    if (!aboutOpen) return;
+
+    const onKey = (e) => {
+      if (e.key === "Escape") setAboutOpen(false);
+    };
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [aboutOpen]);
+
+  const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // signup (customer only)
   const [fullName, setFullName] = useState("");
-
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
   const [busy, setBusy] = useState(false);
@@ -101,10 +135,8 @@ export default function Login() {
         await login({ email: em, password });
         setOk("Logged in ✅");
       } else {
-        // ✅ Customer-only sign up (role is set in registerUser -> "customer")
         await registerUser({ fullName, email: em, password });
         setOk("Account created ✅ Logging you in...");
-        // createUserWithEmailAndPassword auto signs in user
       }
     } catch (e2) {
       setErr(e2?.message || (mode === "login" ? "Login failed." : "Sign up failed."));
@@ -113,7 +145,6 @@ export default function Login() {
     }
   }
 
-  // Already signed in
   if (!loading && user) return <Navigate to="/dashboard" replace />;
 
   return (
@@ -121,7 +152,7 @@ export default function Login() {
       topbarProps={{
         showNav: false,
         brand: "Pharmacy System",
-        showUserMenu: false, // ✅ REMOVE user menu on Login only
+        showUserMenu: false,
       }}
     >
       <div className="authPage">
@@ -164,20 +195,37 @@ export default function Login() {
               <div className="bullet">
                 <span className="dot ok">✓</span> Role-based dashboards after login
               </div>
-            </motion.div>
-
-            <motion.div className="tip" variants={m.soft}>
-              <div className="tipTitle">Phone testing tip</div>
-              <div className="tipBody">
-                If your PC and phone are on the same Wi-Fi, open the site using your PC IP:
-                <div className="tipCode">http://192.168.x.x:5173</div>
+              <div className="bullet">
+                <span className="dot ok">✓</span> Role-based dashboards after login
               </div>
             </motion.div>
+
+            {/* About Us inside brandCard */}
+            <motion.div className="aboutBrandBox" variants={m.soft}>
+              <div className="aboutBrandText">
+                <div className="aboutBrandTitle">About Us</div>
+                <div className="aboutBrandSub">Meet the researchers & developers behind this system.</div>
+              </div>
+
+              <motion.button
+                type="button"
+                className="aboutBrandBtn"
+                onClick={() => setAboutOpen(true)}
+                whileHover={reduce ? undefined : { scale: 1.03 }}
+                whileTap={reduce ? undefined : { scale: 0.97 }}
+                transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 700, damping: 35 }}
+                aria-haspopup="dialog"
+                aria-expanded={aboutOpen}
+              >
+                View About Us
+              </motion.button>
+            </motion.div>
+
+            
           </motion.aside>
 
           {/* Right / Auth */}
           <motion.main className="card formCard" variants={m.card} layout>
-            {/* Standardized header area */}
             <div className="pageHeader">
               <div className="pageHeaderText">
                 <div className="pageTitle">{mode === "login" ? "Welcome back" : "Create Customer Account"}</div>
@@ -206,7 +254,6 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Mode Switch */}
             <div className="segmented" role="tablist" aria-label="Authentication mode">
               <motion.button
                 type="button"
@@ -246,7 +293,6 @@ export default function Login() {
             </div>
 
             <form onSubmit={handleSubmit} className="form" aria-busy={busy || loading}>
-              {/* Signup-only: Full Name */}
               <AnimatePresence initial={false} mode="popLayout">
                 {mode === "signup" ? (
                   <motion.div
@@ -288,7 +334,6 @@ export default function Login() {
               <div className="field">
                 <label className="label">Password</label>
 
-                {/* aligned row: input + button */}
                 <div className="passRow">
                   <input
                     className="control"
@@ -361,17 +406,130 @@ export default function Login() {
                 </AnimatePresence>
               </div>
 
-              <div className="help">
-                <div className="helpTitle">Notes</div>
-                <ul className="helpList">
-                  <li>Customers can create their own account here.</li>
-                  <li>Admin/Pharmacist/Kiosk/Display accounts should be created by Admin.</li>
-                  <li>If signup fails, check Firebase Auth + Firestore rules.</li>
-                </ul>
-              </div>
+              
             </form>
           </motion.main>
         </motion.div>
+
+        {/* About Drawer -> Bottom Sheet (slides UP) */}
+        <AnimatePresence>
+          {aboutOpen ? (
+            <motion.div
+              className="drawerOverlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={reduce ? { duration: 0 } : { duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              onClick={() => setAboutOpen(false)}
+              role="presentation"
+            >
+              <motion.aside
+                className="drawerPanel"
+                initial={{ y: reduce ? 0 : 26, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: reduce ? 0 : 26, opacity: 0 }}
+                transition={
+                  reduce
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 520, damping: 42, mass: 0.9 }
+                }
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-label="About Us"
+              >
+                <div className="sheetHandle" aria-hidden />
+
+                <div className="drawerHeader">
+                  <div>
+                    <div className="drawerTitle">About Us</div>
+                    <div className="drawerSub">A quick look at the team behind this Pharmacy Management System.</div>
+                  </div>
+
+                  <motion.button
+                    type="button"
+                    className="drawerClose"
+                    onClick={() => setAboutOpen(false)}
+                    whileHover={reduce ? undefined : { scale: 1.04 }}
+                    whileTap={reduce ? undefined : { scale: 0.96 }}
+                    transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 700, damping: 35 }}
+                    aria-label="Close"
+                    title="Close"
+                  >
+                    <span className="xIcon" aria-hidden="true">
+                      ✕
+                    </span>
+                  </motion.button>
+                </div>
+
+                <div className="drawerBody">
+                  {/* ✅ synchronized parent stagger */}
+                  <motion.div
+                    className="researchGrid"
+                    initial="hidden"
+                    animate="show"
+                    variants={{
+                      hidden: {},
+                      show: {
+                        transition: reduce
+                          ? { duration: 0 }
+                          : { staggerChildren: 0.08, delayChildren: 0.02 },
+                      },
+                    }}
+                  >
+                    {researchers.map((r, idx) => {
+                      const initials = String(r.name || "R")
+                        .trim()
+                        .split(/\s+/)
+                        .slice(0, 2)
+                        .map((w) => w[0]?.toUpperCase())
+                        .join("")
+                        .slice(0, 2);
+
+                      return (
+                        <motion.div
+                          key={r.name}
+                          className="researchCard"
+                          variants={{
+                            hidden: { opacity: 0, y: reduce ? 0 : 10 },
+                            show: {
+                              opacity: 1,
+                              y: 0,
+                              transition: reduce
+                                ? { duration: 0 }
+                                : { duration: 0.22, ease: [0.16, 1, 0.3, 1] },
+                            },
+                          }}
+                        >
+                          <div className="researchTop">
+                            <div className={`avatar tone${(idx % 3) + 1}`}>
+                              {r.photo ? (
+                                <img src={r.photo} alt={`${r.name} profile`} />
+                              ) : (
+                                <span aria-hidden>{initials || "R"}</span>
+                              )}
+                            </div>
+
+                            <div className="researchMeta">
+                              <div className="researchName">{r.name}</div>
+                              <div className="researchTag">Researcher / Developer</div>
+                            </div>
+                          </div>
+
+                          <div className="researchBio">{r.bio}</div>
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+
+                  
+
+                  <div style={{ height: "calc(env(safe-area-inset-bottom) + 8px)" }} />
+                </div>
+              </motion.aside>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     </AppShell>
   );
@@ -516,15 +674,12 @@ const css = `
 }
 
 *{ box-sizing:border-box; }
-@media (prefers-reduced-motion: reduce){
-  *{ scroll-behavior:auto !important; }
-}
 
 /* =========================
    Page Layout
 ========================= */
 .authPage{
-  min-height: calc(100vh - var(--topbar-h, 64px)); /* ✅ so it fits under Topbar */
+  min-height: calc(100vh - var(--topbar-h, 64px));
   padding: clamp(16px, 3vw, 28px);
   display: grid;
   place-items: center;
@@ -645,6 +800,51 @@ const css = `
   color: var(--success-ink);
 }
 
+/* About section inside brand card */
+.aboutBrandBox{
+  margin-top: 12px;
+  border: 1px solid var(--stroke);
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.aboutBrandTitle{
+  font-size: 12px;
+  font-weight: 950;
+  color: var(--muted2);
+}
+
+.aboutBrandSub{
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.aboutBrandBtn{
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--primary-stroke);
+  background: var(--primary-soft);
+  color: var(--primary-ink);
+  font-weight: 950;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 12px 22px rgba(37,99,235,.12);
+}
+
+@media (max-width: 420px){
+  .aboutBrandBox{ flex-direction: column; align-items: flex-start; }
+  .aboutBrandBtn{ width: 100%; }
+}
+
 .tip{
   margin-top: 12px;
   border: 1px dashed var(--stroke2);
@@ -682,7 +882,7 @@ const css = `
 }
 
 /* =========================
-   Form Card (Standard Header)
+   Form Card
 ========================= */
 .formCard{
   display:flex;
@@ -816,7 +1016,6 @@ const css = `
   box-shadow: 0 0 0 4px var(--primary-weak);
 }
 
-/* password row alignment */
 .passRow{
   display:flex;
   gap: 10px;
@@ -828,7 +1027,6 @@ const css = `
   min-width: 0;
 }
 
-/* toggle button same height as input */
 .toggleBtn{
   height: 44px;
   padding: 0 14px;
@@ -914,7 +1112,7 @@ const css = `
    Help Box
 ========================= */
 .help{
-  border: 1px dashed var(--stroke2);
+  border: 1px solid var(--stroke2);
   background: var(--panel-bg);
   padding: 12px;
   border-radius: 14px;
@@ -933,5 +1131,190 @@ const css = `
   font-size: 12px;
   font-weight: 750;
   line-height: 1.6;
+}
+
+/* =========================
+   Bottom Sheet Drawer (slides up)
+========================= */
+.drawerOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(2,6,23,.55);
+  backdrop-filter: blur(6px);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding: 0;
+}
+
+.drawerPanel{
+  width: min(560px, 100%);
+  max-height: 86vh;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  box-shadow: var(--shadow);
+  display:flex;
+  flex-direction:column;
+  overflow: hidden;
+}
+
+.sheetHandle{
+  width: 54px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(148,163,184,.55);
+  margin: 10px auto 0;
+}
+
+.drawerHeader{
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--hairline);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+}
+
+.drawerTitle{
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: -0.2px;
+}
+
+.drawerSub{
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.drawerClose{
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: var(--btn-ghost-bg);
+  color: var(--ink);
+  font-weight: 950;
+  cursor: pointer;
+
+  display: grid;
+  place-items: center; /* ✅ perfect centering */
+}
+
+.drawerClose .xIcon{
+  display: block;
+  line-height: 1;      /* ✅ fixes optical mis-centering */
+  font-size: 18px;
+}
+
+.drawerBody{
+  padding: 14px 16px 18px;
+  overflow:auto;
+}
+
+.researchGrid{
+  display:grid;
+  gap: 12px;
+}
+
+.researchCard{
+  border: 1px solid var(--stroke);
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.researchTop{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+.avatar{
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  display:grid;
+  place-items:center;
+  font-weight: 950;
+  letter-spacing: .5px;
+  color: var(--ink);
+  box-shadow: 0 12px 18px rgba(15,23,42,.10);
+  user-select: none;
+}
+
+.avatar img{
+  width: 100%;
+  height: 100%;
+  display:block;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.avatar span{ line-height: 1; }
+
+.avatar.tone1{ background: radial-gradient(110% 110% at 25% 20%, rgba(59,130,246,.22) 0%, rgba(59,130,246,.02) 58%), var(--surfaceSolid); }
+.avatar.tone2{ background: radial-gradient(110% 110% at 25% 20%, rgba(99,102,241,.22) 0%, rgba(99,102,241,.02) 58%), var(--surfaceSolid); }
+.avatar.tone3{ background: radial-gradient(110% 110% at 25% 20%, rgba(16,185,129,.20) 0%, rgba(16,185,129,.02) 58%), var(--surfaceSolid); }
+
+.researchName{
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.researchTag{
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.researchBio{
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted2);
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.drawerNote{
+  margin-top: 12px;
+  border: 1px dashed var(--stroke2);
+  background: var(--panel-bg);
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.drawerNoteTitle{
+  font-size: 12px;
+  font-weight: 950;
+  color: var(--muted2);
+}
+
+.drawerNoteBody{
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.drawerNoteBody code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 900;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+  background: var(--surfaceSolid);
+  color: var(--ink);
 }
 `;

@@ -74,9 +74,7 @@ export default function PharmacistDashboard() {
           </div>
 
           <div className="pHeaderRight">
-            <span className="pill">
-              Role: <b>{role}</b>
-            </span>
+            {/* ✅ REMOVED: Role pill in header */}
             {branchLabel ? (
               <span className="pill pillWide" title={branchLabel}>
                 Branch: <b>{branchLabel}</b>
@@ -108,7 +106,6 @@ export default function PharmacistDashboard() {
 
         {/* Actions */}
         <motion.div className="grid" variants={m.item}>
-
           <DashLink to="/queue-dashboard">
             <ActionCard
               icon="🎫"
@@ -118,7 +115,7 @@ export default function PharmacistDashboard() {
             />
           </DashLink>
 
-             <DashLink to="/verify-reservation">
+          <DashLink to="/verify-reservation">
             <ActionCard
               icon="✅"
               title="Verify Reservation"
@@ -126,7 +123,7 @@ export default function PharmacistDashboard() {
               motionProps={m}
             />
           </DashLink>
-          
+
           <DashLink to="/inventory">
             <ActionCard
               icon="📦"
@@ -136,9 +133,7 @@ export default function PharmacistDashboard() {
             />
           </DashLink>
 
-        
-
-       
+          
 
           <DashLink to="/reservations-hub">
             <ActionCard
@@ -154,6 +149,14 @@ export default function PharmacistDashboard() {
               icon="🔎"
               title="Stock Lookup"
               desc="Check medicine availability across branches."
+              motionProps={m}
+            />
+          </DashLink>
+          <DashLink to="/pos">
+            <ActionCard
+              icon="💳"
+              title="Point of Sale"
+              desc="Pay via Cash/Card/GCash + Auto-Inventory"
               motionProps={m}
             />
           </DashLink>

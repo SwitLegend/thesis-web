@@ -23,6 +23,10 @@ import ReserveMeds from "./pages/ReserveMeds";
 import VerifyReservation from "./pages/VerifyReservation";
 import ReservationsHub from "./pages/ReservationsHub";
 
+// POS
+import POS from "./pages/POS";
+import Receipt from "./pages/Receipt";
+
 import AdminUsers from "./pages/AdminUsers";
 import CustomerInventory from "./pages/CustomerInventory";
 import CustomerDashboard from "./pages/CustomerDashboard";
@@ -205,6 +209,29 @@ export default function App() {
             <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
               <AppShell>
                 <VerifyReservation />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* POS (admin + pharmacist) */}
+        <Route
+          path="/pos"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <POS />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/receipt/:saleId"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "pharmacist"]}>
+              <AppShell>
+                <Receipt />
               </AppShell>
             </ProtectedRoute>
           }

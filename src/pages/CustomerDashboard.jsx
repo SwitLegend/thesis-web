@@ -74,9 +74,7 @@ export default function CustomerDashboard() {
           </div>
 
           <div className="pHeaderRight">
-            <span className="pill">
-              Role: <b>{role}</b>
-            </span>
+            {/* ✅ REMOVED: Role pill in header */}
           </div>
         </div>
 
@@ -116,7 +114,7 @@ export default function CustomerDashboard() {
             <ActionCard
               icon="🔎"
               title="Stock Lookup"
-              desc="Search medicines and see which branches have stock."
+              desc="Pay via Cash/Card/GCash + Auto-Inventory"
               motionProps={m}
             />
           </DashLink>

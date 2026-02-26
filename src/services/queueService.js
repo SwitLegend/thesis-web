@@ -24,22 +24,29 @@ function ticketsCol(branchId) {
 
 /* ---------------- REALTIME SUBSCRIBERS ---------------- */
 
-export function subscribeQueueMeta(branchId, cb) {
+export function subscribeQueueMeta(branchId, cb, onError) {
   if (!branchId) return () => {};
-  return onSnapshot(queueRef(branchId), (snap) => {
-    if (!snap.exists()) {
-      cb({ currentNumber: 0, servingTicketId: null });
-      return;
+  return onSnapshot(
+    queueRef(branchId),
+    (snap) => {
+      if (!snap.exists()) {
+        cb({ currentNumber: 0, servingTicketId: null });
+        return;
+      }
+      const d = snap.data();
+      cb({
+        currentNumber: Number(d.currentNumber || 0),
+        servingTicketId: d.servingTicketId || null,
+      });
+    },
+    (err) => {
+      console.error("subscribeQueueMeta error:", err);
+      onError?.(err);
     }
-    const d = snap.data();
-    cb({
-      currentNumber: Number(d.currentNumber || 0),
-      servingTicketId: d.servingTicketId || null,
-    });
-  });
+  );
 }
 
-export function subscribeNextWaiting(branchId, cb) {
+export function subscribeNextWaiting(branchId, cb, onError) {
   if (!branchId) return () => {};
   const q = query(
     ticketsCol(branchId),
@@ -48,30 +55,51 @@ export function subscribeNextWaiting(branchId, cb) {
     limit(1)
   );
 
-  return onSnapshot(q, (snap) => {
-    if (snap.empty) return cb(null);
-    const d = snap.docs[0];
-    cb({ id: d.id, ...d.data() });
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      if (snap.empty) return cb(null);
+      const d = snap.docs[0];
+      cb({ id: d.id, ...d.data() });
+    },
+    (err) => {
+      console.error("subscribeNextWaiting error:", err);
+      onError?.(err);
+    }
+  );
 }
 
-export function subscribeWaitingCount(branchId, cb) {
+export function subscribeWaitingCount(branchId, cb, onError) {
   if (!branchId) return () => {};
   const q = query(ticketsCol(branchId), where("status", "==", "waiting"));
-  return onSnapshot(q, (snap) => cb(snap.size));
+  return onSnapshot(
+    q,
+    (snap) => cb(snap.size),
+    (err) => {
+      console.error("subscribeWaitingCount error:", err);
+      onError?.(err);
+    }
+  );
 }
 
-export function subscribeNowServing(branchId, servingTicketId, cb) {
+export function subscribeNowServing(branchId, servingTicketId, cb, onError) {
   if (!branchId) return () => {};
   if (!servingTicketId) {
     cb(null);
     return () => {};
   }
   const ref = doc(db, "queues", branchId, "tickets", servingTicketId);
-  return onSnapshot(ref, (snap) => {
-    if (!snap.exists()) return cb(null);
-    cb({ id: snap.id, ...snap.data() });
-  });
+  return onSnapshot(
+    ref,
+    (snap) => {
+      if (!snap.exists()) return cb(null);
+      cb({ id: snap.id, ...snap.data() });
+    },
+    (err) => {
+      console.error("subscribeNowServing error:", err);
+      onError?.(err);
+    }
+  );
 }
 
 /* ---------------- CORE ACTIONS ---------------- */
@@ -127,7 +155,9 @@ export async function getNowServing(branchId) {
   const servingTicketId = qSnap.data().servingTicketId;
   if (!servingTicketId) return null;
 
-  const tSnap = await getDoc(doc(db, "queues", branchId, "tickets", servingTicketId));
+  const tSnap = await getDoc(
+    doc(db, "queues", branchId, "tickets", servingTicketId)
+  );
   if (!tSnap.exists()) return null;
 
   return { id: tSnap.id, ...tSnap.data() };
@@ -150,14 +180,22 @@ export async function nextTicket(branchId) {
     const waitingSnap = await getDocs(qWaiting);
 
     if (waitingSnap.empty) {
-      tx.set(qRef, { servingTicketId: null, updatedAt: serverTimestamp() }, { merge: true });
+      tx.set(
+        qRef,
+        { servingTicketId: null, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
       return null;
     }
 
     const nextDoc = waitingSnap.docs[0];
 
     tx.update(nextDoc.ref, { status: "serving" });
-    tx.set(qRef, { servingTicketId: nextDoc.id, updatedAt: serverTimestamp() }, { merge: true });
+    tx.set(
+      qRef,
+      { servingTicketId: nextDoc.id, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
 
     return { id: nextDoc.id, ...nextDoc.data(), status: "serving" };
   });
@@ -182,21 +220,24 @@ export async function doneTicket(branchId) {
 
     if (tSnap.exists()) tx.update(tRef, { status: "done" });
 
-    tx.set(qRef, { servingTicketId: null, updatedAt: serverTimestamp() }, { merge: true });
+    tx.set(
+      qRef,
+      { servingTicketId: null, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
 
-    return tSnap.exists() ? { id: servingTicketId, ...tSnap.data(), status: "done" } : null;
+    return tSnap.exists()
+      ? { id: servingTicketId, ...tSnap.data(), status: "done" }
+      : null;
   });
 
   return res;
 }
 
 /* ---------------- RESET QUEUE (ADMIN) ----------------
-   This will:
    1) Set queues/{branchId}.currentNumber = 0
    2) Set servingTicketId = null
    3) Delete ALL tickets under queues/{branchId}/tickets
-
-   NOTE: Firestore deletes are limited per batch (500). We do it in chunks.
 */
 export async function resetQueue(branchId) {
   if (!branchId) throw new Error("branchId is required");
@@ -214,8 +255,7 @@ export async function resetQueue(branchId) {
     );
   });
 
-  // 2) Delete all tickets in batches of 450-500 (safe)
-  // If you expect thousands of tickets, consider using a Cloud Function later.
+  // 2) Delete all tickets in batches
   while (true) {
     const snap = await getDocs(query(ticketsCol(branchId), limit(450)));
     if (snap.empty) break;

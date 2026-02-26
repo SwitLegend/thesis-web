@@ -6,11 +6,15 @@
 :root {
   --topbar-h: 64px;
 
+  /* iPhone safe-area support */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --topbar-total-h: calc(var(--topbar-h) + var(--safe-top));
+
   --ink: #0f172a;
   --muted: #64748b;
   --stroke: rgba(226, 232, 240, 0.9);
 
-  /* solid backgrounds for menu + mobile nav */
+  /* solid backgrounds for menu + mobile nav + notification panel */
   --topbar-bg: #ffffff;
   --topbar-stroke: rgba(226, 232, 240, 0.9);
 
@@ -35,7 +39,7 @@ html.dark,
 }
 
 .appMain {
-  padding-top: var(--topbar-h);
+  padding-top: var(--topbar-total-h);
 }
 
 /* ===== Topbar ===== */
@@ -44,8 +48,11 @@ html.dark,
   top: 0;
   left: 0;
   right: 0;
-  height: var(--topbar-h);
+  height: var(--topbar-total-h);
   z-index: 1000;
+
+  /* safe-area padding for iPhone notch */
+  padding-top: var(--safe-top);
 
   /* NOTE: background-color (not background) so theme transitions stay synced */
   background-color: rgba(255, 255, 255, 0.78);
@@ -245,6 +252,26 @@ html.dark .iconBtn:hover {
   color: rgba(29, 78, 216, 1);
 }
 
+
+/* ===== Fix unwanted tap/click highlight on hamburger ===== */
+.iconBtnMenu,
+.iconBtnMenu * {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* remove click-focus ring (mouse/touch), keep keyboard focus via :focus-visible */
+.iconBtnMenu:focus {
+  outline: none;
+}
+.iconBtnMenu:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+.iconBtnMenu:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+  border-color: rgba(147, 197, 253, 0.65);
+}
 [data-theme="dark"] .iconBtnMenu,
 html.dark .iconBtnMenu {
   background-color: rgba(59, 130, 246, 0.18);
@@ -485,12 +512,8 @@ html.dark .menuItem.danger,
 }
 
 /* ===== Desktop/Mobile helpers ===== */
-.desktopOnly {
-  display: inline-flex;
-}
-.mobileOnly {
-  display: none;
-}
+.desktopOnly { display: inline-flex; }
+.mobileOnly { display: none; }
 
 @media (max-width: 860px) {
   .desktopOnly { display: none; }
@@ -498,11 +521,7 @@ html.dark .menuItem.danger,
   .topbarNav { display: none; }
 }
 
-/* ✅ Collision fix on very small screens:
-   - tighter spacing
-   - hide brand text
-   - user button becomes avatar-only (same width as icon buttons)
-*/
+/* ✅ Collision fix on very small screens */
 @media (max-width: 420px) {
   .topbarInner {
     padding: 0 10px;
@@ -561,7 +580,7 @@ html.dark .menuItem.danger,
 .mobileBackdrop {
   position: fixed;
   inset: 0;
-  top: var(--topbar-h);
+  top: var(--topbar-total-h);
   background-color: rgba(15, 23, 42, 0.35);
   backdrop-filter: blur(2px);
   z-index: 45;
@@ -575,7 +594,7 @@ html.dark .mobileBackdrop,
 
 .mobileNav {
   position: fixed;
-  top: calc(var(--topbar-h) + 10px);
+  top: calc(var(--topbar-total-h) + 10px);
   left: 12px;
   right: 12px;
   z-index: 46;
@@ -631,6 +650,429 @@ html.dark .mobileLink.active,
   background-color: rgba(59, 130, 246, 0.18);
 }
 
+/* =========================
+   Notification Center (Topbar Bell)
+========================= */
+
+.notifWrap { position: relative; }
+.notifBtn { position: relative; }
+
+.notifEmoji {
+  font-size: 18px;
+  line-height: 1;
+  transform: translateY(0.5px);
+}
+
+
+.notifBtn.isOpen {
+  background-color: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.18);
+  color: rgba(29, 78, 216, 1);
+}
+
+html.dark .notifBtn.isOpen,
+[data-theme="dark"] .notifBtn.isOpen {
+  background-color: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: rgba(147, 197, 253, 1);
+}
+
+.notifBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  background-color: rgba(37, 99, 235, 0.95);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.12);
+}
+
+html.dark .notifBadge,
+[data-theme="dark"] .notifBadge {
+  border-color: rgba(2, 6, 23, 0.85);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.35);
+}
+
+.notifBackdrop {
+  position: fixed;
+  inset: 0;
+  top: var(--topbar-total-h);
+  background-color: rgba(15, 23, 42, 0.22);
+  z-index: 60;
+}
+
+html.dark .notifBackdrop,
+[data-theme="dark"] .notifBackdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.notifCard {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  max-height: min(520px, calc(100vh - var(--topbar-total-h) - 24px));
+
+  border-radius: 18px;
+  border: 1px solid var(--topbar-stroke);
+  background-color: var(--topbar-bg);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.14);
+  overflow: hidden;
+  z-index: 70;
+
+  transform-origin: top right;
+  will-change: transform, opacity;
+}
+
+html.dark .notifCard,
+[data-theme="dark"] .notifCard {
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.44);
+}
+
+.notifHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--topbar-stroke);
+}
+
+.notifTitle {
+  font-weight: 950;
+  font-size: 13px;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+}
+
+.notifSub {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.notifHeadActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notifHeadBtn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--topbar-stroke);
+  background-color: rgba(15, 23, 42, 0.04);
+  color: var(--ink);
+  font-weight: 950;
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+
+html.dark .notifHeadBtn,
+[data-theme="dark"] .notifHeadBtn {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.notifHeadBtn:hover {
+  background-color: rgba(15, 23, 42, 0.06);
+}
+
+html.dark .notifHeadBtn:hover,
+[data-theme="dark"] .notifHeadBtn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.notifHeadBtn:active { transform: scale(0.98); }
+
+.notifList {
+  overflow: auto;
+  padding: 8px;
+}
+
+.notifItem {
+  width: 100%;
+  border: 1px solid transparent;
+  background-color: transparent;
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+
+.notifItem:hover {
+  background-color: rgba(15, 23, 42, 0.04);
+  border-color: var(--topbar-stroke);
+}
+
+.notifItem:active { transform: scale(0.995); }
+
+html.dark .notifItem:hover,
+[data-theme="dark"] .notifItem:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.notifItem.unread {
+  background-color: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.14);
+}
+
+html.dark .notifItem.unread,
+[data-theme="dark"] .notifItem.unread {
+  background-color: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.24);
+}
+
+.notifIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background-color: rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--topbar-stroke);
+  font-size: 16px;
+}
+
+html.dark .notifIcon,
+[data-theme="dark"] .notifIcon {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.notifBody { min-width: 0; }
+
+.notifRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notifItemTitle {
+  font-weight: 950;
+  font-size: 12px;
+  letter-spacing: -0.2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifTime {
+  font-weight: 900;
+  font-size: 11px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.notifMsg {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notifDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: rgba(37, 99, 235, 0.95);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.notifEmpty {
+  padding: 24px 14px;
+  text-align: center;
+}
+
+.notifEmptyIcon { font-size: 22px; }
+
+.notifEmptyTitle {
+  margin-top: 8px;
+  font-weight: 950;
+  color: var(--ink);
+}
+
+.notifEmptySub {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+@media (max-width: 520px) {
+  .notifCard {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: calc(var(--topbar-total-h) + 10px);
+    width: auto;
+    max-height: calc(100vh - var(--topbar-total-h) - 24px);
+    transform-origin: top center;
+  }
+}
+
+/* =========================
+   Toasts (Apple-like stack)
+========================= */
+
+.toastViewport {
+  position: fixed;
+  top: calc(var(--topbar-total-h) + 12px);
+  right: 12px;
+  z-index: 2000;
+  display: grid;
+  gap: 10px;
+
+  /* allow clicks on cards only */
+  pointer-events: none;
+}
+
+.toastCard {
+  pointer-events: auto;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  border-radius: 18px;
+  border: 1px solid var(--topbar-stroke);
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(14px);
+  padding: 12px;
+
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 10px;
+  align-items: start;
+}
+
+html.dark .toastCard,
+[data-theme="dark"] .toastCard {
+  background-color: rgba(2, 6, 23, 0.42);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.44);
+}
+
+.toastIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background-color: rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--topbar-stroke);
+  font-size: 16px;
+}
+
+html.dark .toastIcon,
+[data-theme="dark"] .toastIcon {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.toastBody { min-width: 0; }
+
+.toastTitle {
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.toastMsg {
+  margin-top: 2px;
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toastClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--topbar-stroke);
+  background-color: rgba(15, 23, 42, 0.04);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-weight: 950;
+  padding: 0;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+}
+
+html.dark .toastClose,
+[data-theme="dark"] .toastClose {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.toastClose:hover {
+  background-color: rgba(15, 23, 42, 0.06);
+}
+
+html.dark .toastClose:hover,
+[data-theme="dark"] .toastClose:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.toastClose:active { transform: scale(0.98); }
+
+.toastAction {
+  margin-top: 8px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--topbar-stroke);
+  background-color: rgba(37, 99, 235, 0.12);
+  color: rgba(29, 78, 216, 1);
+  font-weight: 950;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+}
+
+html.dark .toastAction,
+[data-theme="dark"] .toastAction {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: rgba(147, 197, 253, 1);
+}
+
+.toastAction:active { transform: scale(0.98); }
+
+@media (max-width: 520px) {
+  .toastViewport {
+    left: 12px;
+    right: 12px;
+    top: calc(var(--topbar-total-h) + 10px);
+  }
+
+  .toastCard {
+    width: auto;
+  }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .menuCard,
@@ -639,11 +1081,50 @@ html.dark .mobileLink.active,
   .mobileBackdrop {
     animation: none !important;
   }
+
   .iconBtn,
   .hamburger .bar,
   .userBtn,
   .navLink,
-  .mobileLink {
+  .mobileLink,
+  .notifHeadBtn,
+  .notifItem,
+  .toastClose,
+  .toastAction,
+  .notifCard,
+  .toastCard {
     transition: none !important;
+  }
+}
+/* =========================
+   FIX: Notification dropdown scroll
+   Paste this near your Notification Center styles
+   OR at the very bottom of shell.css
+   ========================= */
+
+.notifCard {
+  max-height: min(520px, calc(100vh - var(--topbar-total-h, 64px) - 24px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* keeps rounded corners while list scrolls */
+}
+
+.notifHead {
+  flex: 0 0 auto; /* header stays fixed */
+}
+
+.notifList {
+  flex: 1 1 auto;
+  min-height: 0; /* IMPORTANT for flex scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
+  overscroll-behavior: contain;
+}
+
+/* Mobile: use full available height */
+@media (max-width: 520px) {
+  .notifCard {
+    max-height: calc(100vh - var(--topbar-total-h, 64px) - 24px);
   }
 }
